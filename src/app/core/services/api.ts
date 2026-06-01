@@ -54,7 +54,7 @@ export class Api {
 
   private handleError(error: HttpErrorResponse): Observable<never> {
     let errorMessage = 'An unknown error occurred!';
-    if (error.error instanceof ErrorEvent) {
+    if (typeof ErrorEvent !== 'undefined' && error.error instanceof ErrorEvent) {
       // Client-side errors
       errorMessage = `Error: ${error.error.message}`;
     } else {

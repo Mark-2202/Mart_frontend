@@ -55,10 +55,12 @@ export class ProductsComponent implements OnInit {
     this.isLoading = true;
     // Load categories and suppliers for dropdowns
     this.categoryService.getCategories().subscribe({
-      next: (cats) => this.categories = cats.filter(c => c.isActive)
+      next: (cats) => this.categories = cats.filter(c => c.isActive),
+      error: () => {}
     });
     this.supplierService.getSuppliers().subscribe({
-      next: (sups) => this.suppliers = sups
+      next: (sups) => this.suppliers = sups,
+      error: () => {}
     });
 
     this.loadProducts();

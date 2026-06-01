@@ -3,6 +3,9 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideToastr } from 'ngx-toastr';
+import { config as rxjsConfig } from 'rxjs';
+
+rxjsConfig.onUnhandledError = (err) => console.warn('Unhandled RxJS error:', err);
 
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
