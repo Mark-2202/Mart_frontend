@@ -1,6 +1,6 @@
 export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:5000/api',
+  production: true,
+  apiUrl: 'https://mini-mart-api.onrender.com',
   appName: 'Mini Mart POS',
   version: '1.0.0'
 };
