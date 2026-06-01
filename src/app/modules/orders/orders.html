@@ -1,0 +1,220 @@
+<div class="container-fluid">
+  <div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+      <h3 class="fw-bold mb-0">Order History</h3>
+      <p class="text-muted mb-0">Monitor POS transactions, billing summaries, and order statuses</p>
+    </div>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="card card-premium mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <!-- Status Filter -->
+        <div class="col-md-3">
+          <label class="form-label text-muted small fw-bold">Order Status</label>
+          <select class="form-select form-control-premium" [(ngModel)]="statusFilter" (change)="applyFilters()">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="refunded">Refunded</option>
+          </select>
+        </div>
+
+        <!-- Start Date -->
+        <div class="col-md-3">
+          <label class="form-label text-muted small fw-bold">Start Date</label>
+          <input type="date" class="form-control form-control-premium" [(ngModel)]="startDate" (change)="applyFilters()" />
+        </div>
+
+        <!-- End Date -->
+        <div class="col-md-3">
+          <label class="form-label text-muted small fw-bold">End Date</label>
+          <input type="date" class="form-control form-control-premium" [(ngModel)]="endDate" (change)="applyFilters()" />
+        </div>
+
+        <!-- Reset Button -->
+        <div class="col-md-3 text-end">
+          <button class="btn btn-outline-secondary w-100 py-2" (click)="resetFilters()">
+            Clear Filters
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="card card-premium">
+    <div class="card-body p-0">
+      @if (isLoading) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="text-muted mt-2">Loading transactions...</p>
+        </div>
+      } @else if (orders.length === 0) {
+        <div class="text-center py-5">
+          <i class="bi bi-receipt fs-1 text-muted"></i>
+          <p class="text-muted mt-2">No orders found.</p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-premium mb-0">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Date & Time</th>
+                <th>Cashier</th>
+                <th>Subtotal</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (order of orders; track order._id) {
+                <tr>
+                  <td>
+                    <span class="fw-bold text-dark">{{ order.orderNumber }}</span>
+                  </td>
+                  <td>
+                    {{ order.customerId?.name || 'Walk-in Customer' }}
+                  </td>
+                  <td>{{ order.createdAt | date:'medium' }}</td>
+                  <td>{{ order.userid?.name || 'System' }}</td>
+                  <td>${{ (order.subtotal || 0).toFixed(2) }}</td>
+                  <td>
+                    <span class="fw-bold text-primary">${{ (order.total || 0).toFixed(2) }}</span>
+                  </td>
+                  <td>
+                    <span class="badge badge-custom text-uppercase" [ngClass]="{
+                      'badge-active': order.status === 'completed',
+                      'bg-warning-subtle text-warning-emphasis': order.status === 'pending',
+                      'badge-inactive': order.status === 'cancelled',
+                      'bg-secondary text-white': order.status === 'refunded'
+                    }">
+                      {{ order.status }}
+                    </span>
+                  </td>
+                  <td class="text-end">
+                    <button class="btn btn-sm btn-outline-primary" (click)="openDetailModal(order)">
+                      <i class="bi bi-eye me-1"></i> View Receipt
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Receipt Detail Modal -->
+@if (showDetailModal && selectedOrder) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(4px);">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+      <div class="modal-content modal-content-premium">
+        <div class="modal-header bg-light no-print">
+          <h5 class="modal-title fw-bold">POS Transaction Receipt</h5>
+          <button type="button" class="btn-close" (click)="closeDetailModal()"></button>
+        </div>
+        
+        <div class="modal-body overflow-y-auto" style="max-height: 75vh;">
+          <!-- Printable Receipt Template -->
+          <div id="printable-invoice" class="p-3 bg-white border rounded">
+            <div class="text-center mb-4 border-bottom pb-3">
+              <h4 class="fw-bold mb-0">MINIMART RETAIL</h4>
+              <p class="text-muted small mb-0">123 Street, City Center</p>
+              <p class="text-muted small mb-0">Tel: +123 456 789</p>
+              <div class="mt-2 text-dark fw-bold">RECEIPT / INVOICE</div>
+            </div>
+
+            <!-- Invoice meta -->
+            <div class="row g-2 mb-3 small">
+              <div class="col-6 text-muted">Order No:</div>
+              <div class="col-6 fw-bold text-end">{{ selectedOrder.orderNumber }}</div>
+              
+              <div class="col-6 text-muted">Date:</div>
+              <div class="col-6 text-end">{{ selectedOrder.createdAt | date:'medium' }}</div>
+              
+              <div class="col-6 text-muted">Cashier:</div>
+              <div class="col-6 text-end">{{ selectedOrder.userid?.name || 'System' }}</div>
+              
+              <div class="col-6 text-muted">Customer:</div>
+              <div class="col-6 text-end fw-semibold">{{ selectedOrder.customerId?.name || 'Walk-in Customer' }}</div>
+              
+              @if (selectedOrder.customerId?.phone) {
+                <div class="col-6 text-muted">Phone:</div>
+                <div class="col-6 text-end">{{ selectedOrder.customerId?.phone }}</div>
+              }
+            </div>
+
+            <!-- Items table -->
+            <table class="table table-sm table-borderless border-top border-bottom py-2 my-3 align-middle small">
+              <thead>
+                <tr class="border-bottom text-muted">
+                  <th>Item</th>
+                  <th class="text-center">Qty</th>
+                  <th class="text-end">Price</th>
+                  <th class="text-end">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of selectedOrder.items; track $index) {
+                  <tr>
+                    <td class="fw-semibold">{{ item.name || 'Product item' }}</td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-end">${{ (item.unitPrice || 0).toFixed(2) }}</td>
+                    <td class="text-end fw-bold">${{ (item.subtotal || 0).toFixed(2) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+
+            <!-- Receipt Summary -->
+            <div class="row g-2 small border-bottom pb-3 mb-3">
+              <div class="col-8 text-muted text-end">Subtotal:</div>
+              <div class="col-4 text-end">${{ (selectedOrder.subtotal || 0).toFixed(2) }}</div>
+              
+              <div class="col-8 text-muted text-end">VAT (10%):</div>
+              <div class="col-4 text-end">${{ (selectedOrder.tax || 0).toFixed(2) }}</div>
+              
+              <div class="col-8 fw-bold text-end fs-6">Grand Total:</div>
+              <div class="col-4 fw-bold text-end text-primary fs-6">${{ (selectedOrder.total || 0).toFixed(2) }}</div>
+            </div>
+
+            <div class="text-center text-muted small mt-2">
+              <div>Thank you for shopping with us!</div>
+              <div>Please keep this invoice.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="modal-footer bg-light no-print d-flex justify-content-between">
+          <div>
+            @if (auth.hasRole(['admin', 'manager']) && selectedOrder.status === 'completed') {
+              <button class="btn btn-outline-danger btn-sm me-2" (click)="changeStatus('cancelled')">
+                <i class="bi bi-x-circle me-1"></i> Cancel Order
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" (click)="changeStatus('refunded')">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Refund Order
+              </button>
+            }
+          </div>
+          <div>
+            <button type="button" class="btn btn-secondary me-2" (click)="closeDetailModal()">Close</button>
+            <button type="button" class="btn btn-primary-premium" (click)="printInvoice()">
+              <i class="bi bi-printer me-1"></i> Print Receipt
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,347 @@
+<div class="container-fluid">
+  <div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+      <h3 class="fw-bold mb-0">Product Inventory</h3>
+      <p class="text-muted mb-0">Manage items, stock counts, categories, and supplier references</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+      @if (auth.hasRole(['admin', 'manager'])) {
+        <button class="btn btn-primary-premium" (click)="openAddModal()">
+          <i class="bi bi-plus-lg me-1"></i> Add Product
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="card card-premium mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-center">
+        <!-- Search bar -->
+        <div class="col-md-4">
+          <label class="form-label text-muted small fw-bold">Search Product</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control form-control-premium border-start-0"
+              placeholder="Search by name or SKU..."
+              [(ngModel)]="searchTerm"
+              (keyup.enter)="applyFilters()"
+            />
+          </div>
+        </div>
+        
+        <!-- Category Dropdown -->
+        <div class="col-md-3">
+          <label class="form-label text-muted small fw-bold">Category</label>
+          <select
+            class="form-select form-control-premium"
+            [(ngModel)]="selectedCategory"
+            (change)="applyFilters()"
+          >
+            <option value="">All Categories</option>
+            @for (cat of categories; track cat._id) {
+              <option [value]="cat._id">{{ cat.name }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Low Stock Switch -->
+        <div class="col-md-3 mt-md-4">
+          <div class="form-check form-switch pt-2">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="lowStockSwitch"
+              [(ngModel)]="showLowStockOnly"
+              (change)="applyFilters()"
+            />
+            <label class="form-check-label fw-semibold text-muted" for="lowStockSwitch">
+              Show Low Stock (< 10)
+            </label>
+          </div>
+        </div>
+
+        <!-- Filter Actions -->
+        <div class="col-md-2 mt-md-4 text-md-end">
+          <button class="btn btn-outline-secondary w-100" (click)="resetFilters()">
+            Clear Filters
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Catalog Grid/Table -->
+  <div class="card card-premium">
+    <div class="card-body p-0">
+      @if (isLoading) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="text-muted mt-2">Loading catalog inventory...</p>
+        </div>
+      } @else if (products.length === 0) {
+        <div class="text-center py-5">
+          <i class="bi bi-box-seam fs-1 text-muted"></i>
+          <p class="text-muted mt-2">No products found in the catalog.</p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-premium mb-0">
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th>Active</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (product of products; track product._id) {
+                <tr>
+                  <td>
+                    <code class="text-dark fw-bold">{{ product.sku }}</code>
+                  </td>
+                  <td>
+                    <span class="fw-semibold text-primary cursor-pointer" (click)="openDetailModal(product)">
+                      {{ product.name }}
+                    </span>
+                  </td>
+                  <td>{{ product.categoryId?.name || 'Unassigned' }}</td>
+                  <td>${{ product.price.toFixed(2) }}</td>
+                  <td>
+                    <span class="fw-bold" [ngClass]="{
+                      'text-danger': getStockStatus(product.stock) === 'out',
+                      'text-warning': getStockStatus(product.stock) === 'low',
+                      'text-success': getStockStatus(product.stock) === 'good'
+                    }">
+                      {{ product.stock }}
+                    </span>
+                  </td>
+                  <td>
+                    @if (getStockStatus(product.stock) === 'out') {
+                      <span class="badge badge-custom badge-inactive">Out of Stock</span>
+                    } @else if (getStockStatus(product.stock) === 'low') {
+                      <span class="badge badge-custom badge-low-stock">Low Stock</span>
+                    } @else {
+                      <span class="badge badge-custom badge-active">In Stock</span>
+                    }
+                  </td>
+                  <td>
+                    <span
+                      class="badge badge-custom cursor-pointer"
+                      [ngClass]="product.isActive ? 'badge-active' : 'badge-inactive'"
+                      (click)="toggleActive(product)"
+                      title="Click to toggle active status"
+                    >
+                      {{ product.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td class="text-end">
+                    <button
+                      class="btn btn-sm btn-outline-info me-2"
+                      (click)="openDetailModal(product)"
+                      title="View Details"
+                    >
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    @if (auth.hasRole(['admin', 'manager'])) {
+                      <button
+                        class="btn btn-sm btn-outline-primary me-2"
+                        (click)="openEditModal(product)"
+                        title="Edit Product"
+                      >
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      @if (auth.hasRole(['admin'])) {
+                        <button
+                          class="btn btn-sm btn-outline-danger"
+                          (click)="deleteProduct(product._id!)"
+                          title="Delete Product"
+                        >
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      }
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Form Modal -->
+@if (showFormModal) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(4px);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-content-premium">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold">{{ isEditMode ? 'Edit Product' : 'Create Product' }}</h5>
+          <button type="button" class="btn-close" (click)="closeFormModal()"></button>
+        </div>
+        <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
+          <div class="modal-body">
+            <div class="row g-3">
+              <!-- Name -->
+              <div class="col-12">
+                <label for="name" class="form-label">Product Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  formControlName="name"
+                  class="form-control form-control-premium"
+                  placeholder="e.g. Coca-Cola 330ml"
+                  [class.is-invalid]="productForm.get('name')?.touched && productForm.get('name')?.invalid"
+                />
+              </div>
+
+              <!-- SKU -->
+              <div class="col-md-6">
+                <label for="sku" class="form-label">SKU</label>
+                <input
+                  type="text"
+                  id="sku"
+                  formControlName="sku"
+                  class="form-control form-control-premium"
+                  placeholder="e.g. COCA330"
+                  [class.is-invalid]="productForm.get('sku')?.touched && productForm.get('sku')?.invalid"
+                />
+              </div>
+
+              <!-- Price -->
+              <div class="col-md-6">
+                <label for="price" class="form-label">Price ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="price"
+                  formControlName="price"
+                  class="form-control form-control-premium"
+                  [class.is-invalid]="productForm.get('price')?.touched && productForm.get('price')?.invalid"
+                />
+              </div>
+
+              <!-- Stock -->
+              <div class="col-md-6">
+                <label for="stock" class="form-label">Initial Stock</label>
+                <input
+                  type="number"
+                  id="stock"
+                  formControlName="stock"
+                  class="form-control form-control-premium"
+                  [class.is-invalid]="productForm.get('stock')?.touched && productForm.get('stock')?.invalid"
+                />
+              </div>
+
+              <!-- Category -->
+              <div class="col-md-6">
+                <label for="categoryId" class="form-label">Category</label>
+                <select
+                  id="categoryId"
+                  formControlName="categoryId"
+                  class="form-select form-control-premium"
+                  [class.is-invalid]="productForm.get('categoryId')?.touched && productForm.get('categoryId')?.invalid"
+                >
+                  <option value="">Select Category</option>
+                  @for (cat of categories; track cat._id) {
+                    <option [value]="cat._id">{{ cat.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Supplier -->
+              <div class="col-12">
+                <label for="supplierId" class="form-label">Supplier</label>
+                <select
+                  id="supplierId"
+                  formControlName="supplierId"
+                  class="form-select form-control-premium"
+                  [class.is-invalid]="productForm.get('supplierId')?.touched && productForm.get('supplierId')?.invalid"
+                >
+                  <option value="">Select Supplier</option>
+                  @for (sup of suppliers; track sup._id) {
+                    <option [value]="sup._id">{{ sup.name }} ({{ sup.contactPerson }})</option>
+                  }
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary" (click)="closeFormModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary-premium">
+              {{ isEditMode ? 'Save Changes' : 'Create Product' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Detail Modal -->
+@if (showDetailModal && selectedProduct) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(4px);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-content-premium">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold">Product Details</h5>
+          <button type="button" class="btn-close" (click)="closeDetailModal()"></button>
+        </div>
+        <div class="modal-body">
+          <div class="text-center mb-4">
+            <div class="fs-1 text-primary">
+              <i class="bi bi-box-seam"></i>
+            </div>
+            <h4 class="fw-bold mb-1">{{ selectedProduct.name }}</h4>
+            <code class="text-muted fs-6">{{ selectedProduct.sku }}</code>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-6 text-muted">Price</div>
+            <div class="col-6 fw-bold text-end">${{ selectedProduct.price.toFixed(2) }}</div>
+            
+            <div class="col-6 text-muted">Current Stock</div>
+            <div class="col-6 fw-bold text-end" [ngClass]="{
+              'text-danger': selectedProduct.stock === 0,
+              'text-warning': selectedProduct.stock > 0 && selectedProduct.stock <= 10
+            }">
+              {{ selectedProduct.stock }} units
+            </div>
+
+            <div class="col-6 text-muted">Category</div>
+            <div class="col-6 text-end">{{ selectedProduct.categoryId?.name || 'Unassigned' }}</div>
+
+            <div class="col-6 text-muted">Supplier</div>
+            <div class="col-6 text-end">{{ selectedProduct.supplierId?.name || 'Unassigned' }}</div>
+
+            <div class="col-6 text-muted">Status</div>
+            <div class="col-6 text-end">
+              <span class="badge badge-custom" [ngClass]="selectedProduct.isActive ? 'badge-active' : 'badge-inactive'">
+                {{ selectedProduct.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+
+            <div class="col-6 text-muted">Added On</div>
+            <div class="col-6 text-end">{{ selectedProduct.createdAt | date:'mediumDate' }}</div>
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary w-100" (click)="closeDetailModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

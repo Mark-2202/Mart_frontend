@@ -1,0 +1,164 @@
+<div class="container-fluid">
+  <div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+      <h3 class="fw-bold mb-0">Categories List</h3>
+      <p class="text-muted mb-0">Organize your products into catalog categories</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+      @if (auth.hasRole(['admin', 'manager'])) {
+        <button class="btn btn-primary-premium" (click)="openAddModal()">
+          <i class="bi bi-plus-lg me-1"></i> Add Category
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Search Card -->
+  <div class="card card-premium mb-4">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control form-control-premium border-start-0"
+              placeholder="Search categories by name or description..."
+              [(ngModel)]="searchTerm"
+              (input)="filterCategories()"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Categories Table -->
+  <div class="card card-premium">
+    <div class="card-body p-0">
+      @if (isLoading) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="text-muted mt-2">Loading categories...</p>
+        </div>
+      } @else if (filteredCategories.length === 0) {
+        <div class="text-center py-5">
+          <i class="bi bi-folder-x fs-1 text-muted"></i>
+          <p class="text-muted mt-2">No categories found matching your query.</p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-premium mb-0">
+            <thead>
+              <tr>
+                <th>Category Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Created By</th>
+                @if (auth.hasRole(['admin', 'manager'])) {
+                  <th class="text-end">Actions</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (category of filteredCategories; track category._id) {
+                <tr>
+                  <td>
+                    <span class="fw-semibold">{{ category.name }}</span>
+                  </td>
+                  <td>{{ category.description || 'No description provided' }}</td>
+                  <td>
+                    <span
+                      class="badge badge-custom text-uppercase cursor-pointer"
+                      [ngClass]="category.isActive ? 'badge-active' : 'badge-inactive'"
+                      (click)="toggleActive(category)"
+                      title="Click to toggle status"
+                    >
+                      {{ category.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td>{{ category.userid?.name || 'System' }}</td>
+                  @if (auth.hasRole(['admin', 'manager'])) {
+                    <td class="text-end">
+                      <button
+                        class="btn btn-sm btn-outline-primary me-2"
+                        (click)="openEditModal(category)"
+                        title="Edit Category"
+                      >
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      @if (auth.hasRole(['admin'])) {
+                        <button
+                          class="btn btn-sm btn-outline-danger"
+                          (click)="deleteCategory(category._id!)"
+                          title="Delete Category"
+                        >
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Modal Dialog -->
+@if (showModal) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(4px);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-content-premium">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold">{{ isEditMode ? 'Edit Category' : 'Create Category' }}</h5>
+          <button type="button" class="btn-close" (click)="closeModal()"></button>
+        </div>
+        <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="name" class="form-label">Category Name</label>
+              <input
+                type="text"
+                id="name"
+                formControlName="name"
+                class="form-control form-control-premium"
+                placeholder="e.g. Beverages, Snacks"
+                [class.is-invalid]="categoryForm.get('name')?.touched && categoryForm.get('name')?.invalid"
+              />
+              @if (categoryForm.get('name')?.touched && categoryForm.get('name')?.errors?.['required']) {
+                <div class="text-danger small mt-1">Name is required</div>
+              }
+              @if (categoryForm.get('name')?.touched && categoryForm.get('name')?.errors?.['minlength']) {
+                <div class="text-danger small mt-1">Name must be at least 3 characters</div>
+              }
+            </div>
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea
+                id="description"
+                formControlName="description"
+                class="form-control form-control-premium"
+                rows="3"
+                placeholder="Describe the category..."
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary-premium">
+              {{ isEditMode ? 'Save Changes' : 'Create Category' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

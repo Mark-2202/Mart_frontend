@@ -1,0 +1,235 @@
+<div class="login-page-container">
+  <!-- Left Side: Dark Form Panel -->
+  <div class="login-form-pane">
+    <div class="login-form-inner">
+      <div class="login-header">
+        <div class="login-logo-circle">
+          <i class="bi bi-shop"></i>
+        </div>
+        <h1>Mini Mart POS</h1>
+        <p class="login-subtitle">Sign in to manage your retail operations</p>
+      </div>
+
+      @if (errorMessage) {
+        <div class="alert alert-danger-custom" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+      }
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="premium-form">
+        <!-- Email Input Group -->
+        <div class="input-field-group">
+          <label for="email" class="custom-label">Email Address</label>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <i class="bi bi-envelope"></i>
+            </span>
+            <input
+              type="email"
+              id="email"
+              formControlName="email"
+              class="custom-input"
+              placeholder="admin@minimart.com"
+              [class.is-invalid-custom]="loginForm.get('email')?.touched && loginForm.get('email')?.invalid"
+            />
+          </div>
+          @if (loginForm.get('email')?.touched && loginForm.get('email')?.errors?.['required']) {
+            <span class="validation-message"><i class="bi bi-x-circle me-1"></i>Email is required</span>
+          }
+          @if (loginForm.get('email')?.touched && loginForm.get('email')?.errors?.['email']) {
+            <span class="validation-message"><i class="bi bi-x-circle me-1"></i>Please enter a valid email</span>
+          }
+        </div>
+
+        <!-- Password Input Group -->
+        <div class="input-field-group">
+          <div class="label-row">
+            <label for="password" class="custom-label">Password</label>
+            <a href="javascript:void(0)" class="forgot-password-link">Forgot Password?</a>
+          </div>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <i class="bi bi-lock"></i>
+            </span>
+            <input
+              [type]="isPasswordVisible() ? 'text' : 'password'"
+              id="password"
+              formControlName="password"
+              class="custom-input"
+              placeholder="••••••••"
+              [class.is-invalid-custom]="loginForm.get('password')?.touched && loginForm.get('password')?.invalid"
+            />
+            <button type="button" class="eye-toggle-btn" (click)="togglePasswordVisibility()">
+              <i class="bi" [class.bi-eye]="!isPasswordVisible()" [class.bi-eye-slash]="isPasswordVisible()"></i>
+            </button>
+          </div>
+          @if (loginForm.get('password')?.touched && loginForm.get('password')?.errors?.['required']) {
+            <span class="validation-message"><i class="bi bi-x-circle me-1"></i>Password is required</span>
+          }
+          @if (loginForm.get('password')?.touched && loginForm.get('password')?.errors?.['minlength']) {
+            <span class="validation-message"><i class="bi bi-x-circle me-1"></i>Password must be at least 6 characters</span>
+          }
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="submit-premium-btn" [disabled]="isLoading">
+          @if (isLoading) {
+            <span class="spinner-ring-sm"></span>
+            <span>Signing in...</span>
+          } @else {
+            <span>Sign In</span>
+          }
+        </button>
+      </form>
+
+      <!-- Demo Credentials Block -->
+      <!-- <div class="demo-credentials-card">
+        <div class="demo-card-header">
+          <i class="bi bi-info-circle-fill"></i>
+          <span>Demo Credentials</span>
+        </div>
+        <div class="demo-card-body">
+          <div class="demo-row">
+            <span class="demo-label">Email:</span>
+            <code class="demo-value">admin@minimart.com</code>
+          </div>
+          <div class="demo-row">
+            <span class="demo-label">Password:</span>
+            <code class="demo-value">Admin123!</code>
+          </div>
+        </div>
+      </div> -->
+      
+      <!-- Don't have an account pill (Bottom section like the mockup) -->
+      <div class="signup-pill-container">
+        <span>Don't have an account?</span>
+        <button type="button" class="signup-pill-btn">Sign up</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side: Vibrant Gradient and SVG Illustration Panel -->
+  <div class="login-visual-pane">
+    <!-- Subtle Floating Fluid Abstract Shapes in Background -->
+    <div class="abstract-shape shape-1"></div>
+    <div class="abstract-shape shape-2"></div>
+    <div class="abstract-shape shape-3"></div>
+
+    <div class="visual-content-wrapper">
+      <div class="visual-text-section">
+        <h2>Empower Your Retail Business</h2>
+        <p>Seamless Point of Sale, intelligent inventory management, and real-time sales analytics, unified in a state-of-the-art interface.</p>
+      </div>
+
+      <!-- Gorgeous Custom Vector SVG Dashboard/Retail illustration -->
+      <div class="vector-illustration-container">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 500" class="premium-vector-svg">
+          <!-- Definitions for gradients and shadows -->
+          <defs>
+            <!-- Dashboard Main Plate Gradient -->
+            <linearGradient id="plateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="rgba(255, 255, 255, 0.15)" />
+              <stop offset="100%" stop-color="rgba(255, 255, 255, 0.03)" />
+            </linearGradient>
+            
+            <!-- Glow/Shadow filter -->
+            <filter id="glowEffect" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#4f46e5" flood-opacity="0.3" />
+            </filter>
+            
+            <!-- Small Card Shadow -->
+            <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000" flood-opacity="0.15" />
+            </filter>
+
+            <!-- Line chart gradient -->
+            <linearGradient id="chartGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#10b981" stop-opacity="0.4" />
+              <stop offset="100%" stop-color="#10b981" stop-opacity="0.0" />
+            </linearGradient>
+
+            <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#a855f7" />
+              <stop offset="100%" stop-color="#6366f1" />
+            </linearGradient>
+          </defs>
+
+          <!-- Background glow element -->
+          <circle cx="300" cy="250" r="180" fill="url(#purpleGrad)" opacity="0.15" filter="blur(40px)" />
+
+          <!-- Main Dashboard Frame -->
+          <g filter="url(#glowEffect)">
+            <!-- Glassmorphic Dashboard Window Plate -->
+            <rect x="100" y="80" width="400" height="280" rx="20" fill="url(#plateGrad)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" backdrop-filter="blur(20px)" />
+            
+            <!-- Window Title bar -->
+            <path d="M100 100A20 20 0 0 1 120 80h360a20 20 0 0 1 20 20v20H100z" fill="rgba(255, 255, 255, 0.08)" stroke="rgba(255,255,255,0.15)" stroke-width="1" />
+            
+            <!-- Window Control dots -->
+            <circle cx="130" cy="100" r="6" fill="#ef4444" />
+            <circle cx="150" cy="100" r="6" fill="#f59e0b" />
+            <circle cx="170" cy="100" r="6" fill="#10b981" />
+            <text x="300" y="105" fill="rgba(255,255,255,0.6)" font-size="12" font-family="sans-serif" text-anchor="middle" font-weight="500">MiniMart Analytics</text>
+
+            <!-- Grid Lines Inside Dashboard -->
+            <line x1="130" y1="160" x2="470" y2="160" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+            <line x1="130" y1="210" x2="470" y2="210" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+            <line x1="130" y1="260" x2="470" y2="260" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+            <line x1="130" y1="310" x2="470" y2="310" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+
+            <!-- Main Area Chart Fill -->
+            <path d="M 130 310 L 130 200 Q 180 160 220 240 T 320 180 T 400 230 Q 430 190 470 150 L 470 310 Z" fill="url(#chartGrad)" />
+            
+            <!-- Main Area Chart Stroke -->
+            <path d="M 130 200 Q 180 160 220 240 T 320 180 T 400 230 Q 430 190 470 150" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" />
+            
+            <!-- Chart Dots and Glows -->
+            <circle cx="220" cy="240" r="5" fill="#10b981" stroke="#fff" stroke-width="2" />
+            <circle cx="320" cy="180" r="5" fill="#10b981" stroke="#fff" stroke-width="2" />
+            <circle cx="400" cy="230" r="5" fill="#10b981" stroke="#fff" stroke-width="2" />
+          </g>
+
+          <!-- Floating Elements: Mini Card 1 - Sales Analytics -->
+          <g transform="translate(60, 240)" filter="url(#cardShadow)" class="floating-widget-left">
+            <rect x="0" y="0" width="130" height="85" rx="14" fill="#ffffff" />
+            <text x="15" y="25" fill="#64748b" font-size="10" font-family="sans-serif" font-weight="600" letter-spacing="0.5">TODAY'S REVENUE</text>
+            <text x="15" y="52" fill="#0f172a" font-size="18" font-family="sans-serif" font-weight="800">$4,852.50</text>
+            <text x="15" y="70" fill="#10b981" font-size="9" font-family="sans-serif" font-weight="700">▲ +12.4% vs yesterday</text>
+            <circle cx="105" cy="50" r="12" fill="rgba(16, 185, 129, 0.1)" />
+            <path d="M101 50 l3 3 l6 -6" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </g>
+
+          <!-- Floating Elements: Mini Card 2 - Inventory Alert -->
+          <g transform="translate(410, 120)" filter="url(#cardShadow)" class="floating-widget-right">
+            <rect x="0" y="0" width="140" height="80" rx="14" fill="#ffffff" />
+            <text x="15" y="25" fill="#64748b" font-size="10" font-family="sans-serif" font-weight="600" letter-spacing="0.5">INVENTORY STATUS</text>
+            <text x="15" y="48" fill="#ef4444" font-size="16" font-family="sans-serif" font-weight="800">5 Items Low</text>
+            <text x="15" y="65" fill="#64748b" font-size="9" font-family="sans-serif" font-weight="500">Needs restocking soon</text>
+            
+            <circle cx="115" cy="45" r="12" fill="rgba(239, 68, 68, 0.1)" />
+            <path d="M115 39 v8 M115 51 h.01" stroke="#ef4444" stroke-width="2" stroke-linecap="round" fill="none"/>
+          </g>
+
+          <!-- Floating Elements: Shopping Basket / Retail POS Symbol -->
+          <g transform="translate(370, 260)" filter="url(#cardShadow)" class="floating-widget-bottom">
+            <rect x="0" y="0" width="150" height="90" rx="14" fill="#1e1b4b" opacity="0.95" />
+            <text x="15" y="25" fill="#a5b4fc" font-size="10" font-family="sans-serif" font-weight="600" letter-spacing="0.5">ACTIVE TERMINAL</text>
+            <text x="15" y="48" fill="#ffffff" font-size="16" font-family="sans-serif" font-weight="700">Terminal #01</text>
+            
+            <!-- Mini Progress bar -->
+            <rect x="15" y="62" width="120" height="6" rx="3" fill="rgba(255,255,255,0.15)"/>
+            <rect x="15" y="62" width="90" height="6" rx="3" fill="#a855f7"/>
+            <text x="15" y="80" fill="#a5b4fc" font-size="8" font-family="sans-serif" font-weight="500">POS Connection: Active 100%</text>
+          </g>
+          
+          <!-- Floating Interactive Icons and Particles -->
+          <circle cx="90" cy="110" r="6" fill="#38bdf8" opacity="0.7" class="particle-1"/>
+          <circle cx="510" cy="230" r="8" fill="#f43f5e" opacity="0.6" class="particle-2"/>
+          <polygon points="250,50 258,62 242,62" fill="#fbbf24" opacity="0.8" class="particle-3"/>
+          <rect x="420" y="380" width="10" height="10" rx="2" fill="#a855f7" transform="rotate(45 425 385)" opacity="0.5" class="particle-4"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>

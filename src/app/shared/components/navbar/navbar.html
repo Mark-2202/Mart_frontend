@@ -1,0 +1,22 @@
+<nav class="navbar-custom">
+  <div class="navbar-title">{{ currentPageTitle() }}</div>
+
+  <div class="navbar-actions">
+    @if (auth.currentUser(); as user) {
+      <div class="user-profile">
+        <div class="user-avatar">
+          {{ user.name.charAt(0).toUpperCase() }}
+        </div>
+        <div class="user-meta d-none d-md-block">
+          <div class="user-display-name">{{ user.name }}</div>
+          <div class="user-display-role">{{ user.role }}</div>
+        </div>
+      </div>
+      
+      <button class="btn btn-outline-danger btn-logout ms-3" (click)="logout()">
+        <i class="bi bi-box-arrow-right"></i>
+        <span class="ms-1 d-none d-sm-inline">Logout</span>
+      </button>
+    }
+  </div>
+</nav>

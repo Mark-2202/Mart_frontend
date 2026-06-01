@@ -1,0 +1,198 @@
+<div class="container-fluid pos-layout">
+  <div class="row g-4 h-100">
+    <!-- Left Column: Products Grid -->
+    <div class="col-lg-8 d-flex flex-column h-100">
+      <!-- Search & Filters -->
+      <div class="card card-premium mb-3">
+        <div class="card-body py-3">
+          <div class="row g-2 align-items-center">
+            <div class="col-md-6">
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 py-2">
+                  <i class="bi bi-search text-muted"></i>
+                </span>
+                <input
+                  type="text"
+                  class="form-control form-control-premium border-start-0 py-2"
+                  placeholder="Search products by name or SKU..."
+                  [(ngModel)]="searchTerm"
+                  (keyup.enter)="applyFilters()"
+                />
+              </div>
+            </div>
+            
+            <div class="col-md-4">
+              <select
+                class="form-select form-control-premium py-2"
+                [(ngModel)]="selectedCategory"
+                (change)="applyFilters()"
+              >
+                <option value="">All Categories</option>
+                @for (cat of categories; track cat._id) {
+                  <option [value]="cat._id">{{ cat.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="col-md-2">
+              <button class="btn btn-outline-secondary w-100 py-2" (click)="resetFilters()">
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products Grid -->
+      <div class="products-grid-container flex-grow-1 overflow-y-auto">
+        @if (isLoadingProducts) {
+          <div class="text-center py-5 bg-white rounded shadow-sm">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mt-2">Loading products catalog...</p>
+          </div>
+        } @else if (products.length === 0) {
+          <div class="text-center py-5 bg-white rounded shadow-sm">
+            <i class="bi bi-search fs-1 text-muted"></i>
+            <p class="text-muted mt-2">No active products found matching filters.</p>
+          </div>
+        } @else {
+          <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3">
+            @for (product of products; track product._id) {
+              <div class="col">
+                <div class="card product-pos-card h-100 cursor-pointer" (click)="product.stock > 0 && addToCart(product)" [class.out-of-stock]="product.stock <= 0">
+                  <div class="card-body d-flex flex-column justify-content-between p-3">
+                    <div>
+                      <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-light text-secondary-emphasis border sku-badge">{{ product.sku }}</span>
+                        @if (product.stock <= 0) {
+                          <span class="badge bg-danger text-white">Out of Stock</span>
+                        } @else if (product.stock <= 10) {
+                          <span class="badge bg-warning text-dark">Low Stock ({{ product.stock }})</span>
+                        } @else {
+                          <span class="badge bg-success-subtle text-success-emphasis">Stock: {{ product.stock }}</span>
+                        }
+                      </div>
+                      <h6 class="product-name fw-bold text-dark mb-1">{{ product.name }}</h6>
+                      <small class="text-muted text-uppercase fs-7">{{ product.categoryId?.name }}</small>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mt-3">
+                      <span class="product-price fw-bold text-primary">${{ product.price.toFixed(2) }}</span>
+                      <button 
+                        class="btn btn-sm btn-primary-premium rounded-circle p-2 d-flex align-items-center justify-content-center"
+                        style="width: 32px; height: 32px;"
+                        [disabled]="product.stock <= 0"
+                        (click)="$event.stopPropagation(); addToCart(product)"
+                      >
+                        <i class="bi bi-plus-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Right Column: Cart Sidepanel -->
+    <div class="col-lg-4 d-flex flex-column h-100">
+      <div class="card card-premium d-flex flex-column h-100 shadow">
+        <!-- Cart Header -->
+        <div class="card-header bg-light border-bottom p-3 d-flex align-items-center justify-content-between">
+          <h5 class="mb-0 fw-bold d-flex align-items-center">
+            <i class="bi bi-cart4 text-primary me-2"></i> Current Cart
+            <span class="badge bg-primary ms-2 rounded-circle">{{ cart.length }}</span>
+          </h5>
+          @if (cart.length > 0) {
+            <button class="btn btn-sm btn-outline-danger" (click)="clearCart()">Clear</button>
+          }
+        </div>
+
+        <!-- Customer Selector -->
+        <div class="p-3 border-bottom bg-light-subtle">
+          <label class="form-label text-muted small fw-bold mb-1">Customer Selection</label>
+          <select 
+            class="form-select form-control-premium" 
+            [(ngModel)]="selectedCustomerId"
+            (change)="saveCart()"
+          >
+            <option [value]="null">Walk-in Customer (Anonymous)</option>
+            @for (cust of customers; track cust._id) {
+              <option [value]="cust._id">{{ cust.name }} ({{ cust.phone }})</option>
+            }
+          </select>
+          @if (selectedCustomerId && getSelectedCustomer(); as selectedCust) {
+            <div class="mt-2 d-flex align-items-center justify-content-between small px-1">
+              <span class="text-muted">Loyalty Points:</span>
+              <span class="badge bg-success-subtle text-success-emphasis fw-bold">
+                {{ selectedCust.loyaltyPoints || 0 }} pts
+              </span>
+            </div>
+          }
+        </div>
+
+        <!-- Cart Items list -->
+        <div class="cart-items-container flex-grow-1 overflow-y-auto p-3">
+          @if (cart.length === 0) {
+            <div class="text-center py-5 my-auto d-flex flex-column align-items-center justify-content-center h-100">
+              <i class="bi bi-cart-x fs-1 text-muted mb-2"></i>
+              <p class="text-muted">Shopping cart is empty.</p>
+              <small class="text-muted">Click products on the left to add items.</small>
+            </div>
+          } @else {
+            <div class="d-flex flex-column gap-3">
+              @for (item of cart; track item.product._id; let i = $index) {
+                <div class="cart-item d-flex align-items-center justify-content-between p-2 border rounded bg-white">
+                  <div class="flex-grow-1 overflow-hidden me-2">
+                    <h6 class="mb-0 text-dark fw-bold text-truncate">{{ item.product.name }}</h6>
+                    <small class="text-muted">${{ item.product.price.toFixed(2) }} each</small>
+                  </div>
+                  
+                  <!-- Quantity controls -->
+                  <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-light border py-0 px-2" (click)="updateQuantity(i, -1)">-</button>
+                    <span class="fw-bold fs-6" style="min-width: 20px; text-align: center;">{{ item.quantity }}</span>
+                    <button class="btn btn-sm btn-light border py-0 px-2" (click)="updateQuantity(i, 1)">+</button>
+                    
+                    <button class="btn btn-sm btn-link text-danger ms-2 p-0" (click)="removeFromCart(i)">
+                      <i class="bi bi-trash-fill fs-5"></i>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Cart Summary & Checkout -->
+        <div class="card-footer bg-light border-top p-3 mt-auto">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Subtotal</span>
+            <span class="fw-semibold text-dark">${{ subtotal.toFixed(2) }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">VAT (10%)</span>
+            <span class="fw-semibold text-dark">${{ taxAmount.toFixed(2) }}</span>
+          </div>
+          <hr class="my-2">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="fs-5 fw-bold text-dark">Total</span>
+            <span class="fs-4 fw-bold text-primary">${{ totalAmount.toFixed(2) }}</span>
+          </div>
+
+          <button 
+            class="btn btn-success btn-secondary-premium w-100 py-3 d-flex align-items-center justify-content-center"
+            [disabled]="cart.length === 0"
+            (click)="checkout()"
+          >
+            <i class="bi bi-credit-card me-2"></i>
+            <span class="fw-bold fs-5">Complete Checkout</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

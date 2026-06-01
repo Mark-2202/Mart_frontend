@@ -1,0 +1,26 @@
+<div class="sidebar">
+  <div class="sidebar-header">
+    <i class="bi bi-shop text-white fs-3"></i>
+    <span class="logo-text ms-2">MiniMart POS</span>
+  </div>
+
+  <ul class="sidebar-menu">
+    @for (item of filteredMenuItems(); track item.path) {
+      <li class="sidebar-item">
+        <a [routerLink]="[item.path]" routerLinkActive="active">
+          <i class="bi {{ item.icon }}"></i>
+          <span>{{ item.label }}</span>
+        </a>
+      </li>
+    }
+  </ul>
+
+  @if (auth.currentUser(); as user) {
+    <div class="sidebar-footer">
+      <div class="user-info-sidebar">
+        <span class="user-name">{{ user.name }}</span>
+        <span class="user-role badge bg-secondary-subtle text-secondary-emphasis align-self-start mt-1">{{ user.role }}</span>
+      </div>
+    </div>
+  }
+</div>

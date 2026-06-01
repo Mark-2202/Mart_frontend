@@ -1,0 +1,187 @@
+<div class="container-fluid">
+  <div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+      <h3 class="fw-bold mb-0">Customer Management</h3>
+      <p class="text-muted mb-0">Track loyalty profiles, contact info, and registration details</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+      <button class="btn btn-primary-premium" (click)="openAddModal()">
+        <i class="bi bi-plus-lg me-1"></i> Add Customer
+      </button>
+    </div>
+  </div>
+
+  <!-- Search Card -->
+  <div class="card card-premium mb-4">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control form-control-premium border-start-0"
+              placeholder="Search customers by name or email..."
+              [(ngModel)]="searchTerm"
+              (keyup.enter)="applyFilters()"
+            />
+          </div>
+        </div>
+        <div class="col-md-2 mt-2 mt-md-0">
+          <button class="btn btn-primary-premium w-100" (click)="applyFilters()">Search</button>
+        </div>
+        <div class="col-md-2 mt-2 mt-md-0">
+          <button class="btn btn-outline-secondary w-100" (click)="resetFilters()">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customers Table -->
+  <div class="card card-premium">
+    <div class="card-body p-0">
+      @if (isLoading) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="text-muted mt-2">Loading customer profiles...</p>
+        </div>
+      } @else if (customers.length === 0) {
+        <div class="text-center py-5">
+          <i class="bi bi-people fs-1 text-muted"></i>
+          <p class="text-muted mt-2">No customers found.</p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-premium mb-0">
+            <thead>
+              <tr>
+                <th>Customer Name</th>
+                <th>Email Address</th>
+                <th>Phone Number</th>
+                <th>Loyalty Points</th>
+                <th>Join Date</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (customer of customers; track customer._id) {
+                <tr>
+                  <td>
+                    <span class="fw-semibold">{{ customer.name }}</span>
+                  </td>
+                  <td>{{ customer.email }}</td>
+                  <td>{{ customer.phone }}</td>
+                  <td>
+                    <span class="badge bg-success-subtle text-success-emphasis fw-bold">
+                      <i class="bi bi-star-fill me-1 text-warning"></i>
+                      {{ customer.loyaltyPoints || 0 }} pts
+                    </span>
+                  </td>
+                  <td>{{ customer.createdAt | date:'mediumDate' }}</td>
+                  <td class="text-end">
+                    <button
+                      class="btn btn-sm btn-outline-primary me-2"
+                      (click)="openEditModal(customer)"
+                      title="Edit Profile"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    @if (auth.hasRole(['admin', 'manager'])) {
+                      <button
+                        class="btn btn-sm btn-outline-danger"
+                        (click)="deleteCustomer(customer._id!)"
+                        title="Delete Profile"
+                      >
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Modal Form -->
+@if (showModal) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(4px);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-content-premium">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold">{{ isEditMode ? 'Edit Customer Profile' : 'Create Customer Profile' }}</h5>
+          <button type="button" class="btn-close" (click)="closeModal()"></button>
+        </div>
+        <form [formGroup]="customerForm" (ngSubmit)="onSubmit()">
+          <div class="modal-body">
+            <div class="row g-3">
+              <!-- Name -->
+              <div class="col-12">
+                <label for="name" class="form-label">Full Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  formControlName="name"
+                  class="form-control form-control-premium"
+                  placeholder="e.g. John Doe"
+                  [class.is-invalid]="customerForm.get('name')?.touched && customerForm.get('name')?.invalid"
+                />
+              </div>
+
+              <!-- Email -->
+              <div class="col-12">
+                <label for="email" class="form-label">Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  formControlName="email"
+                  class="form-control form-control-premium"
+                  placeholder="e.g. john@example.com"
+                  [class.is-invalid]="customerForm.get('email')?.touched && customerForm.get('email')?.invalid"
+                />
+              </div>
+
+              <!-- Phone -->
+              <div class="col-md-6">
+                <label for="phone" class="form-label">Phone Number</label>
+                <input
+                  type="text"
+                  id="phone"
+                  formControlName="phone"
+                  class="form-control form-control-premium"
+                  placeholder="e.g. +123456789"
+                  [class.is-invalid]="customerForm.get('phone')?.touched && customerForm.get('phone')?.invalid"
+                />
+              </div>
+
+              <!-- Loyalty Points -->
+              <div class="col-md-6">
+                <label for="loyaltyPoints" class="form-label">Loyalty Points</label>
+                <input
+                  type="number"
+                  id="loyaltyPoints"
+                  formControlName="loyaltyPoints"
+                  class="form-control form-control-premium"
+                  [readonly]="!auth.hasRole(['admin', 'manager'])"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary-premium">
+              {{ isEditMode ? 'Save Changes' : 'Create Customer' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
